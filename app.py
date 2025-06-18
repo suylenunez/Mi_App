@@ -1,20 +1,22 @@
+# Título principal
 import streamlit as st
 import requests
 
-# Carga tu API key desde secrets
-API_KEY = st.secrets["GROQ_API_KEY"]
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
-
 modelos = ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768", "gemma-7b-it"]
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Barra lateral para elegir modelo
+# --- Barra lateral para configuración ---
 st.sidebar.title("Configuración de la IA")
+
+# Entrada de la clave en la interfaz (no se guarda)
+API_KEY = st.sidebar.text_input("🔐 Ingresá tu API Key de Groq", type="password")
+
+# Selección de modelo
 modelo_seleccionado = st.sidebar.selectbox("Seleccionar modelo", modelos)
 
-# Título principal
 st.title("🧠 Mi chat de IA")
 
 # Mostrar mensajes anteriores
@@ -22,15 +24,18 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Entrada del usuario
+# Entrada de mensaje
 entrada = st.chat_input("Escribí tu mensaje aquí...")
 
 if entrada:
-    # Mostrar mensaje del usuario
+    # Verificar que se ingresó la clave
+    if not API_KEY:
+        st.warning("Por favor, ingresá tu API Key en la barra lateral.")
+        st.stop()
+
     st.chat_message("user").markdown(entrada)
     st.session_state.messages.append({"role": "user", "content": entrada})
 
-    # Preparar payload y headers
     payload = {
         "model": modelo_seleccionado,
         "messages": st.session_state.messages,
@@ -42,13 +47,11 @@ if entrada:
         "Content-Type": "application/json"
     }
 
-    # Llamar a la API de Groq
     try:
         response = requests.post(API_URL, headers=headers, json=payload)
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
 
-        # Mostrar respuesta del asistente
         st.chat_message("assistant").markdown(content)
         st.session_state.messages.append({"role": "assistant", "content": content})
 
