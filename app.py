@@ -39,7 +39,7 @@ if entrada:
     }
 
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {API_URL}",
         "Content-Type": "application/json"
     }
 
